@@ -10,9 +10,10 @@ You can chose up to 3 oscillators to create the sound, as well as changing wavef
 
 The basic workflow is:
 
-
+```text
  OSC 1 ──┐
          │
  OSC 2 ──┼──► MIXER ──► FILTER ──► ADSR ──► MASTER
          │
  OSC 3 ──┘
+```
