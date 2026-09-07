@@ -1,0 +1,4475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Web Synthesiser</title>
+
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.all.min.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+
+    background: #111;
+    color: #ddd;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    overflow: auto;
+}
+
+#synth {
+
+    width: min(1150px, 96vw);
+
+    margin: 20px;
+
+    background: #1b1b1b;
+
+    border: 1px solid #444;
+    border-radius: 12px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.5);
+}
+
+h1 {
+
+    margin: 0 0 18px 0;
+
+    font-size: 24px;
+    font-weight: normal;
+
+    letter-spacing: 3px;
+
+    color: #eee;
+}
+
+.section {
+    margin-bottom: 18px;
+}
+
+.section-title {
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 2px;
+
+    color: #888;
+
+    margin-bottom: 8px;
+}
+
+.controls {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 18px;
+
+    align-items: flex-end;
+
+    padding: 14px;
+
+    background: #151515;
+
+    border: 1px solid #333;
+
+    border-radius: 8px;
+}
+
+.control {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+label {
+
+    font-size: 12px;
+
+    color: #999;
+}
+
+select,
+input[type="number"] {
+
+    background: #222;
+
+    color: #eee;
+
+    border: 1px solid #555;
+
+    border-radius: 4px;
+
+    padding: 7px 10px;
+
+    font-size: 14px;
+}
+
+input[type="range"] {
+
+    width: 150px;
+
+    accent-color: #aaa;
+}
+
+.value {
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #ccc;
+}
+
+button {
+
+    background: #292929;
+
+    border: 1px solid #555;
+
+    color: #ddd;
+
+    padding: 8px 14px;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: #353535;
+}
+
+button:disabled {
+
+    opacity: 0.4;
+
+    cursor: default;
+}
+
+
+/* =================================================
+   SWITCH
+================================================= */
+
+.switch-row {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    height: 34px;
+}
+
+.switch {
+
+    position: relative;
+
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+
+    opacity: 0;
+
+    width: 0;
+    height: 0;
+}
+
+.slider {
+
+    position: absolute;
+
+    inset: 0;
+
+    background: #333;
+
+    border: 1px solid #666;
+
+    border-radius: 20px;
+
+    cursor: pointer;
+}
+
+.slider:before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 18px;
+    height: 18px;
+
+    left: 2px;
+    top: 2px;
+
+    background: #aaa;
+
+    border-radius: 50%;
+
+    transition: 0.2s;
+}
+
+.switch input:checked + .slider {
+    background: #666;
+}
+
+.switch input:checked + .slider:before {
+
+    transform: translateX(20px);
+
+    background: #eee;
+}
+
+
+/* =================================================
+   OSCILLATORS
+================================================= */
+
+.oscillators {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 12px;
+}
+
+.oscillator-panel {
+
+    background: #111;
+
+    border: 1px solid #444;
+
+    border-radius: 8px;
+
+    padding: 14px;
+}
+
+.oscillator-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 12px;
+}
+
+.oscillator-title {
+
+    font-size: 14px;
+
+    letter-spacing: 1px;
+
+    color: #ddd;
+}
+
+.oscillator-panel .control {
+
+    margin-bottom: 12px;
+}
+
+.oscillator-panel input[type="range"] {
+    width: 100%;
+}
+
+.osc-frequency {
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #777;
+
+    margin-top: 4px;
+}
+
+
+/* =================================================
+   ADSR
+================================================= */
+
+#envelope-container {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 270px;
+
+    background: #0d0d0d;
+
+    border: 1px solid #444;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+#envelopeCanvas {
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+}
+
+.envelope-values {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 30px;
+
+    margin-top: 8px;
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #999;
+}
+
+
+/* =================================================
+   FILTER
+================================================= */
+
+.filter-controls {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 25px;
+
+    align-items: flex-end;
+
+    padding: 14px;
+
+    background: #151515;
+
+    border: 1px solid #333;
+
+    border-radius: 8px;
+}
+
+
+/* =================================================
+   KEYBOARD
+================================================= */
+
+#keyboard-container {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 220px;
+
+    background: #080808;
+
+    border: 1px solid #444;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+
+    user-select: none;
+}
+
+#keyboard {
+
+    position: absolute;
+
+    left: 10px;
+    right: 10px;
+
+    bottom: 10px;
+    top: 10px;
+}
+
+.white-key {
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #eee,
+            #aaa
+        );
+
+    border: 1px solid #222;
+
+    border-radius:
+        0 0 5px 5px;
+
+    cursor: pointer;
+
+    z-index: 1;
+}
+
+.white-key:hover {
+
+    background:
+        linear-gradient(
+            to bottom,
+            #fff,
+            #bbb
+        );
+}
+
+.white-key.active {
+
+    background:
+        linear-gradient(
+            to bottom,
+            #aaa,
+            #777
+        );
+}
+
+.black-key {
+
+    position: absolute;
+
+    top: 0;
+
+    height: 60%;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #333,
+            #050505
+        );
+
+    border: 1px solid #000;
+
+    border-radius:
+        0 0 4px 4px;
+
+    cursor: pointer;
+
+    z-index: 2;
+
+    box-shadow:
+        0 4px 5px rgba(0,0,0,0.7);
+}
+
+.black-key:hover {
+
+    background:
+        linear-gradient(
+            to bottom,
+            #444,
+            #111
+        );
+}
+
+.black-key.active {
+
+    background:
+        linear-gradient(
+            to bottom,
+            #666,
+            #222
+        );
+}
+
+.key-label {
+
+    position: absolute;
+
+    bottom: 10px;
+
+    left: 0;
+
+    width: 100%;
+
+    text-align: center;
+
+    color: #555;
+
+    font-size: 11px;
+
+    pointer-events: none;
+}
+
+.black-key .key-label {
+
+    color: #aaa;
+
+    bottom: 7px;
+
+    font-size: 9px;
+}
+
+
+/* =================================================
+   EXPORT
+================================================= */
+
+.export-controls {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    align-items: flex-end;
+
+    padding: 14px;
+
+    background: #151515;
+
+    border: 1px solid #333;
+
+    border-radius: 8px;
+}
+
+#exportStatus {
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #999;
+
+    min-width: 200px;
+}
+
+
+/* =================================================
+   STATUS
+================================================= */
+
+#status {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 10px;
+
+    padding: 8px 12px;
+
+    background: #151515;
+
+    border-radius: 5px;
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #888;
+}
+
+#currentNote,
+#frequencyStatus {
+    color: #ccc;
+}
+
+
+@media (max-width: 800px) {
+
+    .oscillators {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div id="synth">
+
+
+<h1>WEB SYNTHESISER</h1>
+
+
+<!-- =================================================
+     OSCILLATORS
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Oscillators
+</div>
+
+
+<div class="oscillators">
+
+
+<!-- OSCILLATOR 1 -->
+
+<div class="oscillator-panel">
+
+<div class="oscillator-header">
+
+<span class="oscillator-title">
+OSCILLATOR 1
+</span>
+
+<label class="switch">
+
+<input
+    type="checkbox"
+    id="osc1Enabled"
+    checked
+>
+
+<span class="slider"></span>
+
+</label>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Waveform
+</label>
+
+<select id="osc1Waveform">
+
+<option value="sine">
+Sine
+</option>
+
+<option value="triangle">
+Triangle
+</option>
+
+<option value="sawtooth">
+Sawtooth
+</option>
+
+</select>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Detune
+</label>
+
+<input
+    type="range"
+    id="osc1Detune"
+    min="-100"
+    max="100"
+    value="0"
+    step="1"
+>
+
+<span
+    class="value"
+    id="osc1DetuneValue">
+0 cents
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Level
+</label>
+
+<input
+    type="range"
+    id="osc1Level"
+    min="0"
+    max="1"
+    value="1"
+    step="0.01"
+>
+
+<span
+    class="value"
+    id="osc1LevelValue">
+100%
+</span>
+
+</div>
+
+
+<div
+    class="osc-frequency"
+    id="osc1Frequency">
+    ---
+</div>
+
+</div>
+
+
+<!-- OSCILLATOR 2 -->
+
+<div class="oscillator-panel">
+
+<div class="oscillator-header">
+
+<span class="oscillator-title">
+OSCILLATOR 2
+</span>
+
+<label class="switch">
+
+<input
+    type="checkbox"
+    id="osc2Enabled"
+    checked
+>
+
+<span class="slider"></span>
+
+</label>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Waveform
+</label>
+
+<select id="osc2Waveform">
+
+<option value="sine">
+Sine
+</option>
+
+<option value="triangle">
+Triangle
+</option>
+
+<option value="sawtooth" selected>
+Sawtooth
+</option>
+
+</select>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Detune
+</label>
+
+<input
+    type="range"
+    id="osc2Detune"
+    min="-100"
+    max="100"
+    value="-7"
+    step="1"
+>
+
+<span
+    class="value"
+    id="osc2DetuneValue">
+-7 cents
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Level
+</label>
+
+<input
+    type="range"
+    id="osc2Level"
+    min="0"
+    max="1"
+    value="0.7"
+    step="0.01"
+>
+
+<span
+    class="value"
+    id="osc2LevelValue">
+70%
+</span>
+
+</div>
+
+
+<div
+    class="osc-frequency"
+    id="osc2Frequency">
+    ---
+</div>
+
+</div>
+
+
+<!-- OSCILLATOR 3 -->
+
+<div class="oscillator-panel">
+
+<div class="oscillator-header">
+
+<span class="oscillator-title">
+OSCILLATOR 3
+</span>
+
+<label class="switch">
+
+<input
+    type="checkbox"
+    id="osc3Enabled"
+    checked
+>
+
+<span class="slider"></span>
+
+</label>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Waveform
+</label>
+
+<select id="osc3Waveform">
+
+<option value="sine">
+Sine
+</option>
+
+<option value="triangle">
+Triangle
+</option>
+
+<option value="sawtooth" selected>
+Sawtooth
+</option>
+
+</select>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Detune
+</label>
+
+<input
+    type="range"
+    id="osc3Detune"
+    min="-100"
+    max="100"
+    value="7"
+    step="1"
+>
+
+<span
+    class="value"
+    id="osc3DetuneValue">
++7 cents
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Level
+</label>
+
+<input
+    type="range"
+    id="osc3Level"
+    min="0"
+    max="1"
+    value="0.7"
+    step="0.01"
+>
+
+<span
+    class="value"
+    id="osc3LevelValue">
+70%
+</span>
+
+</div>
+
+
+<div
+    class="osc-frequency"
+    id="osc3Frequency">
+    ---
+</div>
+
+</div>
+
+
+</div>
+</div>
+
+
+<!-- =================================================
+     GLOBAL OSCILLATOR SETTINGS
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Global Oscillator Settings
+</div>
+
+
+<div class="controls">
+
+
+<div class="control">
+
+<label for="fundamental">
+Frequency
+</label>
+
+<input
+    type="number"
+    id="fundamental"
+    value="440"
+    min="20"
+    max="5000"
+    step="1"
+>
+
+<span
+    class="value"
+    id="frequencyModeLabel">
+A4 reference
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Frequency Mode
+</label>
+
+<div class="switch-row">
+
+<label class="switch">
+
+<input
+    type="checkbox"
+    id="baseFrequencyMode"
+>
+
+<span class="slider"></span>
+
+</label>
+
+<span id="modeText">
+A4 reference
+</span>
+
+</div>
+
+</div>
+
+
+<div class="control">
+
+<label for="masterVolume">
+Master Volume
+</label>
+
+<input
+    type="range"
+    id="masterVolume"
+    min="0"
+    max="1"
+    step="0.01"
+    value="0.35"
+>
+
+<span
+    class="value"
+    id="volumeValue">
+35%
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Octave
+</label>
+
+<div>
+
+<button id="octaveDown">
+−
+</button>
+
+<span id="octaveDisplay">
+4
+</span>
+
+<button id="octaveUp">
++
+</button>
+
+</div>
+
+</div>
+
+
+</div>
+</div>
+
+
+<!-- =================================================
+     ADSR
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    ADSR Envelope
+</div>
+
+
+<div id="envelope-container">
+
+<canvas id="envelopeCanvas"></canvas>
+
+</div>
+
+
+<div class="envelope-values">
+
+<span>
+ATTACK:
+<span id="attackValue"></span>
+</span>
+
+<span>
+DECAY:
+<span id="decayValue"></span>
+</span>
+
+<span>
+SUSTAIN:
+<span id="sustainValue"></span>
+</span>
+
+<span>
+RELEASE:
+<span id="releaseValue"></span>
+</span>
+
+</div>
+
+</div>
+
+
+<!-- =================================================
+     FILTER
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Filter
+</div>
+
+
+<div class="filter-controls">
+
+
+<div class="control">
+
+<label for="filterType">
+Type
+</label>
+
+<select id="filterType">
+
+<option value="lowpass">
+Low-pass
+</option>
+
+<option value="highpass">
+High-pass
+</option>
+
+<option value="bandpass">
+Band-pass
+</option>
+
+</select>
+
+</div>
+
+
+<div class="control">
+
+<label for="filterCutoff">
+Cutoff
+</label>
+
+<input
+    type="range"
+    id="filterCutoff"
+    min="40"
+    max="18000"
+    value="8000"
+    step="1"
+>
+
+<span
+    class="value"
+    id="cutoffValue">
+8000 Hz
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label for="filterResonance">
+Resonance
+</label>
+
+<input
+    type="range"
+    id="filterResonance"
+    min="0.1"
+    max="20"
+    value="1"
+    step="0.1"
+>
+
+<span
+    class="value"
+    id="resonanceValue">
+Q 1.0
+</span>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Envelope → Filter
+</label>
+
+<div class="switch-row">
+
+<label class="switch">
+
+<input
+    type="checkbox"
+    id="filterEnvelope"
+    checked
+>
+
+<span class="slider"></span>
+
+</label>
+
+<span>
+Enabled
+</span>
+
+</div>
+
+</div>
+
+
+<div class="control">
+
+<label for="filterEnvelopeAmount">
+Envelope Amount
+</label>
+
+<input
+    type="range"
+    id="filterEnvelopeAmount"
+    min="0"
+    max="10000"
+    value="4000"
+    step="10"
+>
+
+<span
+    class="value"
+    id="filterEnvelopeAmountValue">
++4000 Hz
+</span>
+
+</div>
+
+
+</div>
+</div>
+
+
+<!-- =================================================
+     KEYBOARD
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Keyboard
+</div>
+
+
+<div id="keyboard-container">
+
+<div id="keyboard"></div>
+
+</div>
+
+</div>
+
+
+<!-- =================================================
+     EXPORT
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Export
+</div>
+
+
+<div class="export-controls">
+
+
+<div class="control">
+
+<label for="exportNote">
+Note
+</label>
+
+<select id="exportNote">
+
+<option value="60">C4</option>
+<option value="61">C#4</option>
+<option value="62">D4</option>
+<option value="63">D#4</option>
+<option value="64">E4</option>
+<option value="65">F4</option>
+<option value="66">F#4</option>
+<option value="67">G4</option>
+<option value="68">G#4</option>
+<option value="69">A4</option>
+<option value="70">A#4</option>
+<option value="71">B4</option>
+<option value="72">C5</option>
+
+</select>
+
+</div>
+
+
+<div class="control">
+
+<label for="exportDuration">
+Duration
+</label>
+
+<input
+    type="number"
+    id="exportDuration"
+    value="3"
+    min="0.5"
+    max="30"
+    step="0.5"
+>
+
+</div>
+
+
+<div class="control">
+
+<label>
+&nbsp;
+</label>
+
+<button id="exportMP3">
+Export MP3
+</button>
+
+</div>
+
+
+<div id="exportStatus">
+Ready
+</div>
+
+
+</div>
+</div>
+
+
+<!-- =================================================
+     STATUS
+================================================= -->
+
+<div id="status">
+
+<span>
+Note:
+<span id="currentNote">---</span>
+</span>
+
+<span>
+Frequency:
+<span id="frequencyStatus">---</span>
+</span>
+
+<span>
+Oscillators:
+<span id="oscillatorStatus">3</span>
+</span>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================================
+   AUDIO ENGINE
+========================================================= */
+
+let audioContext = null;
+
+let masterGain = null;
+
+const activeVoices = new Map();
+
+
+/* =========================================================
+   GLOBAL SETTINGS
+========================================================= */
+
+let fundamental = 440;
+
+let baseFrequencyMode = false;
+
+let masterVolume = 0.35;
+
+let octave = 4;
+
+
+/* =========================================================
+   OSCILLATOR SETTINGS
+========================================================= */
+
+const oscillators = [
+
+    {
+        enabled: true,
+        waveform: "sine",
+        detune: 0,
+        level: 1
+    },
+
+    {
+        enabled: true,
+        waveform: "sawtooth",
+        detune: -7,
+        level: 0.7
+    },
+
+    {
+        enabled: true,
+        waveform: "sawtooth",
+        detune: 7,
+        level: 0.7
+    }
+
+];
+
+
+/* =========================================================
+   ADSR
+========================================================= */
+
+const envelope = {
+
+    attack: 0.15,
+
+    decay: 0.25,
+
+    sustain: 0.65,
+
+    release: 0.45
+
+};
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+let filterType = "lowpass";
+
+let filterCutoff = 8000;
+
+let filterResonance = 1;
+
+let filterEnvelopeEnabled = true;
+
+let filterEnvelopeAmount = 4000;
+
+
+/* =========================================================
+   INITIALISE AUDIO
+========================================================= */
+
+function initAudio() {
+
+    if (audioContext) {
+        return;
+    }
+
+
+    audioContext = new (
+        window.AudioContext ||
+        window.webkitAudioContext
+    )();
+
+
+    masterGain =
+        audioContext.createGain();
+
+
+    masterGain.gain.value =
+        masterVolume;
+
+
+    masterGain.connect(
+        audioContext.destination
+    );
+}
+
+
+/* =========================================================
+   FREQUENCY
+========================================================= */
+
+function midiToFrequency(midi) {
+
+    if (baseFrequencyMode) {
+
+        /*
+            C4 = fundamental
+        */
+
+        const semitones =
+            midi - 60;
+
+
+        return fundamental *
+            Math.pow(
+                2,
+                semitones / 12
+            );
+
+    }
+
+
+    /*
+        Fundamental is A4.
+    */
+
+    return fundamental *
+        Math.pow(
+            2,
+            (midi - 69) / 12
+        );
+}
+
+
+/* =========================================================
+   DETUNED FREQUENCY
+========================================================= */
+
+function applyDetune(
+    frequency,
+    cents
+) {
+
+    return frequency *
+        Math.pow(
+            2,
+            cents / 1200
+        );
+}
+
+
+/* =========================================================
+   NOTE NAME
+========================================================= */
+
+function midiToName(midi) {
+
+    const names = [
+
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B"
+
+    ];
+
+
+    return names[
+        midi % 12
+    ] +
+    (
+        Math.floor(midi / 12) - 1
+    );
+}
+
+
+/* =========================================================
+   CREATE VOICE
+========================================================= */
+
+function noteOn(midi) {
+
+    initAudio();
+
+
+    if (
+        activeVoices.has(midi)
+    ) {
+        return;
+    }
+
+
+    if (
+        audioContext.state ===
+        "suspended"
+    ) {
+
+        audioContext.resume();
+
+    }
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    /*
+        Each note has its own mixer.
+    */
+
+    const voiceMixer =
+        audioContext.createGain();
+
+
+    /*
+        Keep the combined oscillator
+        level under control.
+    */
+
+    voiceMixer.gain.value =
+        0.33;
+
+
+    /*
+        Filter
+    */
+
+    const filter =
+        audioContext.createBiquadFilter();
+
+
+    filter.type =
+        filterType;
+
+
+    filter.frequency.setValueAtTime(
+        filterCutoff,
+        now
+    );
+
+
+    filter.Q.setValueAtTime(
+        filterResonance,
+        now
+    );
+
+
+    /*
+        ADSR gain
+    */
+
+    const gain =
+        audioContext.createGain();
+
+
+    gain.gain.setValueAtTime(
+        0,
+        now
+    );
+
+
+    /*
+        Attack
+    */
+
+    gain.gain.linearRampToValueAtTime(
+
+        1,
+
+        now +
+        envelope.attack
+
+    );
+
+
+    /*
+        Decay
+    */
+
+    gain.gain.linearRampToValueAtTime(
+
+        envelope.sustain,
+
+        now +
+        envelope.attack +
+        envelope.decay
+
+    );
+
+
+    /*
+        Filter envelope
+    */
+
+    if (
+        filterEnvelopeEnabled
+    ) {
+
+        const peakCutoff =
+            Math.min(
+
+                20000,
+
+                filterCutoff +
+                filterEnvelopeAmount
+
+            );
+
+
+        filter.frequency
+            .setValueAtTime(
+
+                filterCutoff,
+
+                now
+
+            );
+
+
+        filter.frequency
+            .linearRampToValueAtTime(
+
+                peakCutoff,
+
+                now +
+                envelope.attack
+
+            );
+
+
+        filter.frequency
+            .linearRampToValueAtTime(
+
+                Math.min(
+
+                    20000,
+
+                    filterCutoff +
+                    filterEnvelopeAmount *
+                    envelope.sustain
+
+                ),
+
+                now +
+                envelope.attack +
+                envelope.decay
+
+            );
+
+    }
+
+
+    /*
+        Create the oscillators.
+    */
+
+    const voiceOscillators = [];
+
+
+    for (
+        let i = 0;
+        i < oscillators.length;
+        i++
+    ) {
+
+        const settings =
+            oscillators[i];
+
+
+        if (
+            !settings.enabled ||
+            settings.level <= 0
+        ) {
+
+            continue;
+
+        }
+
+
+        const oscillator =
+            audioContext.createOscillator();
+
+
+        oscillator.type =
+            settings.waveform;
+
+
+        const baseNoteFrequency =
+            midiToFrequency(midi);
+
+
+        const frequency =
+            applyDetune(
+
+                baseNoteFrequency,
+
+                settings.detune
+
+            );
+
+
+        oscillator.frequency
+            .setValueAtTime(
+                frequency,
+                now
+            );
+
+
+        /*
+            Individual oscillator gain.
+        */
+
+        const oscillatorGain =
+            audioContext.createGain();
+
+
+        oscillatorGain.gain.value =
+            settings.level;
+
+
+        oscillator.connect(
+            oscillatorGain
+        );
+
+
+        oscillatorGain.connect(
+            voiceMixer
+        );
+
+
+        oscillator.start(now);
+
+
+        voiceOscillators.push({
+
+            oscillator,
+
+            gain: oscillatorGain
+
+        });
+
+    }
+
+
+    /*
+        Mixer → filter → ADSR
+    */
+
+    voiceMixer.connect(
+        filter
+    );
+
+
+    filter.connect(
+        gain
+    );
+
+
+    gain.connect(
+        masterGain
+    );
+
+
+    activeVoices.set(
+
+        midi,
+
+        {
+
+            oscillators:
+                voiceOscillators,
+
+            mixer:
+                voiceMixer,
+
+            filter,
+
+            gain
+
+        }
+
+    );
+
+
+    /*
+        Status
+    */
+
+    document.getElementById(
+        "currentNote"
+    ).textContent =
+        midiToName(midi);
+
+
+    document.getElementById(
+        "frequencyStatus"
+    ).textContent =
+        midiToFrequency(midi)
+            .toFixed(2) +
+        " Hz";
+
+
+    updateOscillatorFrequencyDisplays(
+        midi
+    );
+
+}
+
+
+/* =========================================================
+   NOTE OFF
+========================================================= */
+
+function noteOff(midi) {
+
+    const voice =
+        activeVoices.get(midi);
+
+
+    if (!voice) {
+        return;
+    }
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    /*
+        Cancel existing ADSR
+        automation.
+    */
+
+    voice.gain.gain
+        .cancelScheduledValues(now);
+
+
+    voice.gain.gain
+        .setValueAtTime(
+
+            voice.gain.gain.value,
+
+            now
+
+        );
+
+
+    /*
+        Release.
+    */
+
+    voice.gain.gain
+        .linearRampToValueAtTime(
+
+            0,
+
+            now +
+            envelope.release
+
+        );
+
+
+    /*
+        Release filter.
+    */
+
+    if (
+        filterEnvelopeEnabled
+    ) {
+
+        voice.filter.frequency
+            .cancelScheduledValues(now);
+
+
+        voice.filter.frequency
+            .setValueAtTime(
+
+                voice.filter.frequency.value,
+
+                now
+
+            );
+
+
+        voice.filter.frequency
+            .linearRampToValueAtTime(
+
+                filterCutoff,
+
+                now +
+                envelope.release
+
+            );
+
+    }
+
+
+    /*
+        Stop all oscillators.
+    */
+
+    for (
+        const osc of
+        voice.oscillators
+    ) {
+
+        osc.oscillator.stop(
+
+            now +
+            envelope.release +
+            0.05
+
+        );
+
+    }
+
+
+    activeVoices.delete(midi);
+
+
+    if (
+        activeVoices.size === 0
+    ) {
+
+        document.getElementById(
+            "currentNote"
+        ).textContent = "---";
+
+
+        document.getElementById(
+            "frequencyStatus"
+        ).textContent = "---";
+
+    }
+
+}
+
+
+/* =========================================================
+   OSCILLATOR UI
+========================================================= */
+
+for (
+    let i = 0;
+    i < 3;
+    i++
+) {
+
+    const number =
+        i + 1;
+
+
+    /*
+        Enable
+    */
+
+    document.getElementById(
+        `osc${number}Enabled`
+    ).addEventListener(
+        "change",
+        function() {
+
+            oscillators[i].enabled =
+                this.checked;
+
+            updateOscillatorCount();
+
+        }
+    );
+
+
+    /*
+        Waveform
+    */
+
+    document.getElementById(
+        `osc${number}Waveform`
+    ).addEventListener(
+        "change",
+        function() {
+
+            oscillators[i].waveform =
+                this.value;
+
+
+            /*
+                Change currently playing
+                oscillators immediately.
+            */
+
+            for (
+                const voice of
+                activeVoices.values()
+            ) {
+
+                if (
+                    voice.oscillators[i]
+                ) {
+
+                    voice.oscillators[i]
+                        .oscillator.type =
+                        this.value;
+
+                }
+
+            }
+
+        }
+    );
+
+
+    /*
+        Detune
+    */
+
+    document.getElementById(
+        `osc${number}Detune`
+    ).addEventListener(
+        "input",
+        function() {
+
+            oscillators[i].detune =
+                parseFloat(this.value);
+
+
+            updateDetuneDisplay(
+                i
+            );
+
+        }
+    );
+
+
+    /*
+        Level
+    */
+
+    document.getElementById(
+        `osc${number}Level`
+    ).addEventListener(
+        "input",
+        function() {
+
+            oscillators[i].level =
+                parseFloat(this.value);
+
+
+            document.getElementById(
+                `osc${number}LevelValue`
+            ).textContent =
+                Math.round(
+                    oscillators[i].level *
+                    100
+                ) + "%";
+
+
+            /*
+                Update active voices.
+            */
+
+            for (
+                const voice of
+                activeVoices.values()
+            ) {
+
+                if (
+                    voice.oscillators[i]
+                ) {
+
+                    voice.oscillators[i]
+                        .gain
+                        .gain.value =
+                        oscillators[i].level;
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   DETUNE DISPLAY
+========================================================= */
+
+function updateDetuneDisplay(i) {
+
+    const number =
+        i + 1;
+
+
+    const value =
+        oscillators[i].detune;
+
+
+    let text;
+
+
+    if (value > 0) {
+
+        text =
+            "+" +
+            value +
+            " cents";
+
+    }
+    else {
+
+        text =
+            value +
+            " cents";
+
+    }
+
+
+    document.getElementById(
+        `osc${number}DetuneValue`
+    ).textContent =
+        text;
+}
+
+
+/* =========================================================
+   OSCILLATOR FREQUENCY DISPLAY
+========================================================= */
+
+function updateOscillatorFrequencyDisplays(
+    midi
+) {
+
+    const baseFrequency =
+        midiToFrequency(midi);
+
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const number =
+            i + 1;
+
+
+        const settings =
+            oscillators[i];
+
+
+        const element =
+            document.getElementById(
+                `osc${number}Frequency`
+            );
+
+
+        if (
+            !settings.enabled
+        ) {
+
+            element.textContent =
+                "OFF";
+
+            continue;
+
+        }
+
+
+        const frequency =
+            applyDetune(
+
+                baseFrequency,
+
+                settings.detune
+
+            );
+
+
+        element.textContent =
+            frequency.toFixed(3) +
+            " Hz";
+
+    }
+
+}
+
+
+/* =========================================================
+   OSCILLATOR COUNT
+========================================================= */
+
+function updateOscillatorCount() {
+
+    const count =
+        oscillators.filter(
+            o => o.enabled
+        ).length;
+
+
+    document.getElementById(
+        "oscillatorStatus"
+    ).textContent =
+        count;
+
+}
+
+
+/* =========================================================
+   GLOBAL FREQUENCY
+========================================================= */
+
+document.getElementById(
+    "fundamental"
+).addEventListener(
+    "input",
+    function() {
+
+        fundamental =
+            parseFloat(this.value);
+
+    }
+);
+
+
+/* =========================================================
+   FREQUENCY MODE
+========================================================= */
+
+document.getElementById(
+    "baseFrequencyMode"
+).addEventListener(
+    "change",
+    function() {
+
+        baseFrequencyMode =
+            this.checked;
+
+
+        document.getElementById(
+            "modeText"
+        ).textContent =
+
+            baseFrequencyMode
+            ? "Base frequency"
+            : "A4 reference";
+
+
+        document.getElementById(
+            "frequencyModeLabel"
+        ).textContent =
+
+            baseFrequencyMode
+            ? "C4 = entered frequency"
+            : "A4 = entered frequency";
+
+    }
+);
+
+
+/* =========================================================
+   MASTER VOLUME
+========================================================= */
+
+document.getElementById(
+    "masterVolume"
+).addEventListener(
+    "input",
+    function() {
+
+        masterVolume =
+            parseFloat(this.value);
+
+
+        document.getElementById(
+            "volumeValue"
+        ).textContent =
+            Math.round(
+                masterVolume * 100
+            ) + "%";
+
+
+        if (masterGain) {
+
+            masterGain.gain
+                .setTargetAtTime(
+
+                    masterVolume,
+
+                    audioContext.currentTime,
+
+                    0.01
+
+                );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   OCTAVE
+========================================================= */
+
+function updateOctave() {
+
+    document.getElementById(
+        "octaveDisplay"
+    ).textContent =
+        octave;
+}
+
+
+document.getElementById(
+    "octaveDown"
+).addEventListener(
+    "click",
+    function() {
+
+        octave =
+            Math.max(
+                1,
+                octave - 1
+            );
+
+        updateOctave();
+
+    }
+);
+
+
+document.getElementById(
+    "octaveUp"
+).addEventListener(
+    "click",
+    function() {
+
+        octave =
+            Math.min(
+                7,
+                octave + 1
+            );
+
+        updateOctave();
+
+    }
+);
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+document.getElementById(
+    "filterType"
+).addEventListener(
+    "change",
+    function() {
+
+        filterType =
+            this.value;
+
+
+        for (
+            const voice of
+            activeVoices.values()
+        ) {
+
+            voice.filter.type =
+                filterType;
+
+        }
+
+    }
+);
+
+
+document.getElementById(
+    "filterCutoff"
+).addEventListener(
+    "input",
+    function() {
+
+        filterCutoff =
+            parseFloat(this.value);
+
+
+        document.getElementById(
+            "cutoffValue"
+        ).textContent =
+            Math.round(
+                filterCutoff
+            ) +
+            " Hz";
+
+
+        if (!audioContext) {
+            return;
+        }
+
+
+        for (
+            const voice of
+            activeVoices.values()
+        ) {
+
+            voice.filter.frequency
+                .setTargetAtTime(
+
+                    filterCutoff,
+
+                    audioContext.currentTime,
+
+                    0.01
+
+                );
+
+        }
+
+    }
+);
+
+
+document.getElementById(
+    "filterResonance"
+).addEventListener(
+    "input",
+    function() {
+
+        filterResonance =
+            parseFloat(this.value);
+
+
+        document.getElementById(
+            "resonanceValue"
+        ).textContent =
+            "Q " +
+            filterResonance.toFixed(1);
+
+
+        if (!audioContext) {
+            return;
+        }
+
+
+        for (
+            const voice of
+            activeVoices.values()
+        ) {
+
+            voice.filter.Q
+                .setTargetAtTime(
+
+                    filterResonance,
+
+                    audioContext.currentTime,
+
+                    0.01
+
+                );
+
+        }
+
+    }
+);
+
+
+document.getElementById(
+    "filterEnvelope"
+).addEventListener(
+    "change",
+    function() {
+
+        filterEnvelopeEnabled =
+            this.checked;
+
+    }
+);
+
+
+document.getElementById(
+    "filterEnvelopeAmount"
+).addEventListener(
+    "input",
+    function() {
+
+        filterEnvelopeAmount =
+            parseFloat(this.value);
+
+
+        document.getElementById(
+            "filterEnvelopeAmountValue"
+        ).textContent =
+            "+" +
+            Math.round(
+                filterEnvelopeAmount
+            ) +
+            " Hz";
+
+    }
+);
+
+
+/* =========================================================
+   ADSR GRAPH
+========================================================= */
+
+const canvas =
+    document.getElementById(
+        "envelopeCanvas"
+    );
+
+const ctx =
+    canvas.getContext("2d");
+
+
+let draggingPoint = null;
+
+
+const envelopePoints = [
+
+    {
+        name: "attack",
+        x: 0.15,
+        y: 1
+    },
+
+    {
+        name: "decay",
+        x: 0.40,
+        y: 0.65
+    },
+
+    {
+        name: "sustain",
+        x: 0.70,
+        y: 0.65
+    },
+
+    {
+        name: "release",
+        x: 1.00,
+        y: 0
+    }
+
+];
+
+
+function resizeEnvelopeCanvas() {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const dpr =
+        window.devicePixelRatio || 1;
+
+
+    canvas.width =
+        rect.width * dpr;
+
+
+    canvas.height =
+        rect.height * dpr;
+
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+
+    drawEnvelope();
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeEnvelopeCanvas
+);
+
+
+/* =========================================================
+   DRAW ENVELOPE
+========================================================= */
+
+function drawEnvelope() {
+
+    const width =
+        canvas.clientWidth;
+
+
+    const height =
+        canvas.clientHeight;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+        Grid
+    */
+
+    ctx.strokeStyle =
+        "#292929";
+
+    ctx.lineWidth = 1;
+
+
+    for (
+        let i = 0;
+        i <= 10;
+        i++
+    ) {
+
+        const x =
+            i / 10 * width;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            height
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    for (
+        let i = 0;
+        i <= 5;
+        i++
+    ) {
+
+        const y =
+            i / 5 * height;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            width,
+            y
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    const points =
+        envelopePoints.map(
+            p => ({
+
+                x:
+                    p.x *
+                    width,
+
+                y:
+                    (1 - p.y) *
+                    height
+
+            })
+        );
+
+
+    /*
+        Fill
+    */
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        height
+    );
+
+
+    for (
+        const p of points
+    ) {
+
+        ctx.lineTo(
+            p.x,
+            p.y
+        );
+
+    }
+
+
+    ctx.lineTo(
+        width,
+        height
+    );
+
+
+    ctx.closePath();
+
+
+    ctx.fillStyle =
+        "rgba(180,180,180,0.08)";
+
+    ctx.fill();
+
+
+    /*
+        Envelope
+    */
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        height
+    );
+
+
+    for (
+        const p of points
+    ) {
+
+        ctx.lineTo(
+            p.x,
+            p.y
+        );
+
+    }
+
+
+    ctx.strokeStyle =
+        "#ddd";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+
+    /*
+        Points
+    */
+
+    for (
+        const p of points
+    ) {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+            p.x,
+            p.y,
+            8,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+            "#ddd";
+
+        ctx.fill();
+
+
+        ctx.strokeStyle =
+            "#111";
+
+        ctx.lineWidth = 2;
+
+        ctx.stroke();
+
+    }
+
+
+    /*
+        Labels
+    */
+
+    ctx.font =
+        "12px monospace";
+
+    ctx.fillStyle =
+        "#777";
+
+
+    ctx.fillText(
+        "ATTACK",
+        points[0].x - 25,
+        20
+    );
+
+
+    ctx.fillText(
+        "DECAY",
+        points[1].x - 20,
+        20
+    );
+
+
+    ctx.fillText(
+        "SUSTAIN",
+        points[2].x - 25,
+        20
+    );
+
+
+    ctx.fillText(
+        "RELEASE",
+        points[3].x - 25,
+        20
+    );
+
+
+    updateEnvelopeValues();
+
+}
+
+
+/* =========================================================
+   ADSR VALUES
+========================================================= */
+
+function updateEnvelopeValues() {
+
+    envelope.attack =
+        envelopePoints[0].x * 2;
+
+
+    envelope.decay =
+        (
+            envelopePoints[1].x -
+            envelopePoints[0].x
+        ) * 2;
+
+
+    envelope.sustain =
+        envelopePoints[2].y;
+
+
+    envelope.release =
+        (
+            envelopePoints[3].x -
+            envelopePoints[2].x
+        ) * 2;
+
+
+    document.getElementById(
+        "attackValue"
+    ).textContent =
+        envelope.attack.toFixed(2) +
+        "s";
+
+
+    document.getElementById(
+        "decayValue"
+    ).textContent =
+        envelope.decay.toFixed(2) +
+        "s";
+
+
+    document.getElementById(
+        "sustainValue"
+    ).textContent =
+        Math.round(
+            envelope.sustain * 100
+        ) + "%";
+
+
+    document.getElementById(
+        "releaseValue"
+    ).textContent =
+        envelope.release.toFixed(2) +
+        "s";
+
+}
+
+
+/* =========================================================
+   FIND ENVELOPE POINT
+========================================================= */
+
+function findEnvelopePoint(
+    x,
+    y
+) {
+
+    const width =
+        canvas.clientWidth;
+
+
+    const height =
+        canvas.clientHeight;
+
+
+    for (
+        let i = 0;
+        i < envelopePoints.length;
+        i++
+    ) {
+
+        const p =
+            envelopePoints[i];
+
+
+        const px =
+            p.x * width;
+
+
+        const py =
+            (1 - p.y) *
+            height;
+
+
+        const distance =
+            Math.hypot(
+
+                x - px,
+
+                y - py
+
+            );
+
+
+        if (
+            distance < 15
+        ) {
+
+            return i;
+
+        }
+
+    }
+
+
+    return null;
+}
+
+
+/* =========================================================
+   POINTER DOWN
+========================================================= */
+
+canvas.addEventListener(
+    "pointerdown",
+    function(event) {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        const x =
+            event.clientX -
+            rect.left;
+
+
+        const y =
+            event.clientY -
+            rect.top;
+
+
+        draggingPoint =
+            findEnvelopePoint(
+                x,
+                y
+            );
+
+
+        if (
+            draggingPoint !== null
+        ) {
+
+            canvas.setPointerCapture(
+                event.pointerId
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   POINTER MOVE
+========================================================= */
+
+canvas.addEventListener(
+    "pointermove",
+    function(event) {
+
+        if (
+            draggingPoint === null
+        ) {
+
+            return;
+
+        }
+
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        let x =
+            event.clientX -
+            rect.left;
+
+
+        let y =
+            event.clientY -
+            rect.top;
+
+
+        const width =
+            canvas.clientWidth;
+
+
+        const height =
+            canvas.clientHeight;
+
+
+        let nx =
+            x / width;
+
+
+        let ny =
+            1 -
+            y / height;
+
+
+        nx =
+            Math.max(
+                0,
+                Math.min(
+                    1,
+                    nx
+                )
+            );
+
+
+        ny =
+            Math.max(
+                0,
+                Math.min(
+                    1,
+                    ny
+                )
+            );
+
+
+        const spacing =
+            0.03;
+
+
+        if (
+            draggingPoint > 0
+        ) {
+
+            nx =
+                Math.max(
+
+                    envelopePoints[
+                        draggingPoint - 1
+                    ].x +
+                    spacing,
+
+                    nx
+
+                );
+
+        }
+
+
+        if (
+            draggingPoint <
+            envelopePoints.length - 1
+        ) {
+
+            nx =
+                Math.min(
+
+                    envelopePoints[
+                        draggingPoint + 1
+                    ].x -
+                    spacing,
+
+                    nx
+
+                );
+
+        }
+
+
+        if (
+            draggingPoint === 3
+        ) {
+
+            ny = 0;
+
+        }
+
+
+        envelopePoints[
+            draggingPoint
+        ].x = nx;
+
+
+        envelopePoints[
+            draggingPoint
+        ].y = ny;
+
+
+        drawEnvelope();
+
+    }
+);
+
+
+canvas.addEventListener(
+    "pointerup",
+    function() {
+
+        draggingPoint = null;
+
+    }
+);
+
+
+canvas.addEventListener(
+    "pointercancel",
+    function() {
+
+        draggingPoint = null;
+
+    }
+);
+
+
+/* =========================================================
+   PIANO
+========================================================= */
+
+const computerKeys = [
+
+    "a",
+    "w",
+    "s",
+    "e",
+    "d",
+    "f",
+    "t",
+    "g",
+    "y",
+    "h",
+    "u",
+    "j",
+    "k",
+    "o",
+    "l",
+    "p",
+    ";",
+    "[",
+    "'"
+
+];
+
+
+const keyboardNotes = [
+
+    0, 1, 2, 3, 4, 5,
+    6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18
+
+];
+
+
+const startingMidi = 60;
+
+
+const whiteNotes =
+    keyboardNotes.filter(
+        n =>
+            ![
+                1,
+                3,
+                6,
+                8,
+                10
+            ].includes(
+                n % 12
+            )
+    );
+
+
+const whiteWidth =
+    100 /
+    whiteNotes.length;
+
+
+const keyboardElement =
+    document.getElementById(
+        "keyboard"
+    );
+
+
+/* =========================================================
+   WHITE KEYS
+========================================================= */
+
+let whiteIndex = 0;
+
+
+for (
+    const offset of keyboardNotes
+) {
+
+    const pitchClass =
+        offset % 12;
+
+
+    const isBlack =
+        [
+            1,
+            3,
+            6,
+            8,
+            10
+        ].includes(
+            pitchClass
+        );
+
+
+    if (isBlack) {
+        continue;
+    }
+
+
+    const midi =
+        startingMidi +
+        offset;
+
+
+    const key =
+        document.createElement(
+            "div"
+        );
+
+
+    key.className =
+        "white-key";
+
+
+    key.dataset.midi =
+        midi;
+
+
+    key.style.left =
+        whiteIndex *
+        whiteWidth +
+        "%";
+
+
+    key.style.width =
+        whiteWidth +
+        "%";
+
+
+    const label =
+        document.createElement(
+            "div"
+        );
+
+
+    label.className =
+        "key-label";
+
+
+    label.textContent =
+        midiToName(midi);
+
+
+    key.appendChild(label);
+
+
+    setupKeyInteraction(
+        key,
+        midi
+    );
+
+
+    keyboardElement.appendChild(
+        key
+    );
+
+
+    whiteIndex++;
+
+}
+
+
+/* =========================================================
+   BLACK KEYS
+========================================================= */
+
+let whiteCounter = 0;
+
+
+for (
+    const offset of keyboardNotes
+) {
+
+    const pitchClass =
+        offset % 12;
+
+
+    const isBlack =
+        [
+            1,
+            3,
+            6,
+            8,
+            10
+        ].includes(
+            pitchClass
+        );
+
+
+    if (!isBlack) {
+
+        whiteCounter++;
+
+        continue;
+
+    }
+
+
+    const midi =
+        startingMidi +
+        offset;
+
+
+    const key =
+        document.createElement(
+            "div"
+        );
+
+
+    key.className =
+        "black-key";
+
+
+    key.dataset.midi =
+        midi;
+
+
+    key.style.left =
+        (
+            whiteCounter *
+            whiteWidth -
+            whiteWidth *
+            0.32
+        ) +
+        "%";
+
+
+    key.style.width =
+        (
+            whiteWidth *
+            0.64
+        ) +
+        "%";
+
+
+    const label =
+        document.createElement(
+            "div"
+        );
+
+
+    label.className =
+        "key-label";
+
+
+    label.textContent =
+        midiToName(midi);
+
+
+    key.appendChild(label);
+
+
+    setupKeyInteraction(
+        key,
+        midi
+    );
+
+
+    keyboardElement.appendChild(
+        key
+    );
+
+}
+
+
+/* =========================================================
+   KEY INTERACTION
+========================================================= */
+
+function setupKeyInteraction(
+    element,
+    midi
+) {
+
+    element.addEventListener(
+        "pointerdown",
+        function(event) {
+
+            event.preventDefault();
+
+
+            element.setPointerCapture(
+                event.pointerId
+            );
+
+
+            element.classList.add(
+                "active"
+            );
+
+
+            noteOn(midi);
+
+        }
+    );
+
+
+    element.addEventListener(
+        "pointerup",
+        function() {
+
+            element.classList.remove(
+                "active"
+            );
+
+
+            noteOff(midi);
+
+        }
+    );
+
+
+    element.addEventListener(
+        "pointercancel",
+        function() {
+
+            element.classList.remove(
+                "active"
+            );
+
+
+            noteOff(midi);
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   COMPUTER KEYBOARD
+========================================================= */
+
+const heldComputerKeys =
+    new Map();
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.repeat) {
+            return;
+        }
+
+
+        const index =
+            computerKeys.indexOf(
+                event.key.toLowerCase()
+            );
+
+
+        if (
+            index === -1
+        ) {
+
+            return;
+
+        }
+
+
+        event.preventDefault();
+
+
+        const midi =
+            startingMidi +
+            index;
+
+
+        if (
+            heldComputerKeys.has(
+                event.key
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        heldComputerKeys.set(
+            event.key,
+            midi
+        );
+
+
+        noteOn(midi);
+
+
+        const element =
+            document.querySelector(
+                `[data-midi="${midi}"]`
+            );
+
+
+        if (element) {
+
+            element.classList.add(
+                "active"
+            );
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    function(event) {
+
+        const midi =
+            heldComputerKeys.get(
+                event.key
+            );
+
+
+        if (
+            midi === undefined
+        ) {
+
+            return;
+
+        }
+
+
+        heldComputerKeys.delete(
+            event.key
+        );
+
+
+        noteOff(midi);
+
+
+        const element =
+            document.querySelector(
+                `[data-midi="${midi}"]`
+            );
+
+
+        if (element) {
+
+            element.classList.remove(
+                "active"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   WINDOW BLUR
+========================================================= */
+
+window.addEventListener(
+    "blur",
+    function() {
+
+        for (
+            const midi of
+            activeVoices.keys()
+        ) {
+
+            noteOff(midi);
+
+        }
+
+
+        heldComputerKeys.clear();
+
+
+        document
+            .querySelectorAll(
+                ".active"
+            )
+            .forEach(
+                element =>
+                    element.classList.remove(
+                        "active"
+                    )
+            );
+
+    }
+);
+
+
+/* =========================================================
+   MP3 RENDERING
+========================================================= */
+
+async function renderNote(
+    midi,
+    duration
+) {
+
+    const totalDuration =
+        duration +
+        envelope.release +
+        0.1;
+
+
+    const sampleRate =
+        44100;
+
+
+    const offlineContext =
+        new OfflineAudioContext(
+
+            1,
+
+            Math.ceil(
+                totalDuration *
+                sampleRate
+            ),
+
+            sampleRate
+
+        );
+
+
+    /*
+        Master
+    */
+
+    const offlineMaster =
+        offlineContext.createGain();
+
+
+    offlineMaster.gain.value =
+        masterVolume;
+
+
+    offlineMaster.connect(
+        offlineContext.destination
+    );
+
+
+    /*
+        Oscillator mixer
+    */
+
+    const mixer =
+        offlineContext.createGain();
+
+
+    /*
+        Prevent three oscillators
+        from producing excessive level.
+    */
+
+    mixer.gain.value =
+        0.33;
+
+
+    /*
+        Filter
+    */
+
+    const filter =
+        offlineContext.createBiquadFilter();
+
+
+    filter.type =
+        filterType;
+
+
+    filter.frequency.value =
+        filterCutoff;
+
+
+    filter.Q.value =
+        filterResonance;
+
+
+    /*
+        Envelope gain
+    */
+
+    const gain =
+        offlineContext.createGain();
+
+
+    gain.gain.setValueAtTime(
+        0,
+        0
+    );
+
+
+    /*
+        ADSR
+    */
+
+    gain.gain.linearRampToValueAtTime(
+
+        1,
+
+        envelope.attack
+
+    );
+
+
+    gain.gain.linearRampToValueAtTime(
+
+        envelope.sustain,
+
+        envelope.attack +
+        envelope.decay
+
+    );
+
+
+    gain.gain.setValueAtTime(
+
+        envelope.sustain,
+
+        duration
+
+    );
+
+
+    gain.gain.linearRampToValueAtTime(
+
+        0,
+
+        duration +
+        envelope.release
+
+    );
+
+
+    /*
+        Filter envelope
+    */
+
+    if (
+        filterEnvelopeEnabled
+    ) {
+
+        const peakCutoff =
+            Math.min(
+
+                20000,
+
+                filterCutoff +
+                filterEnvelopeAmount
+
+            );
+
+
+        filter.frequency
+            .setValueAtTime(
+
+                filterCutoff,
+
+                0
+
+            );
+
+
+        filter.frequency
+            .linearRampToValueAtTime(
+
+                peakCutoff,
+
+                envelope.attack
+
+            );
+
+
+        filter.frequency
+            .linearRampToValueAtTime(
+
+                Math.min(
+
+                    20000,
+
+                    filterCutoff +
+                    filterEnvelopeAmount *
+                    envelope.sustain
+
+                ),
+
+                envelope.attack +
+                envelope.decay
+
+            );
+
+
+        filter.frequency
+            .setValueAtTime(
+
+                Math.min(
+
+                    20000,
+
+                    filterCutoff +
+                    filterEnvelopeAmount *
+                    envelope.sustain
+
+                ),
+
+                duration
+
+            );
+
+
+        filter.frequency
+            .linearRampToValueAtTime(
+
+                filterCutoff,
+
+                duration +
+                envelope.release
+
+            );
+
+    }
+
+
+    /*
+        Create all enabled oscillators.
+    */
+
+    for (
+        const settings of oscillators
+    ) {
+
+        if (
+            !settings.enabled ||
+            settings.level <= 0
+        ) {
+
+            continue;
+
+        }
+
+
+        const oscillator =
+            offlineContext.createOscillator();
+
+
+        oscillator.type =
+            settings.waveform;
+
+
+        const baseFrequency =
+            midiToFrequency(midi);
+
+
+        oscillator.frequency.value =
+            applyDetune(
+
+                baseFrequency,
+
+                settings.detune
+
+            );
+
+
+        const oscillatorGain =
+            offlineContext.createGain();
+
+
+        oscillatorGain.gain.value =
+            settings.level;
+
+
+        oscillator.connect(
+            oscillatorGain
+        );
+
+
+        oscillatorGain.connect(
+            mixer
+        );
+
+
+        oscillator.start(0);
+
+
+        oscillator.stop(
+            totalDuration
+        );
+
+    }
+
+
+    /*
+        Signal chain
+    */
+
+    mixer.connect(
+        filter
+    );
+
+
+    filter.connect(
+        gain
+    );
+
+
+    gain.connect(
+        offlineMaster
+    );
+
+
+    return await
+        offlineContext.startRendering();
+
+}
+
+
+/* =========================================================
+   MP3 ENCODER
+========================================================= */
+
+function audioBufferToMP3(
+    audioBuffer
+) {
+
+    const samples =
+        audioBuffer.getChannelData(0);
+
+
+    const sampleRate =
+        audioBuffer.sampleRate;
+
+
+    const samples16 =
+        new Int16Array(
+            samples.length
+        );
+
+
+    for (
+        let i = 0;
+        i < samples.length;
+        i++
+    ) {
+
+        const sample =
+            Math.max(
+                -1,
+                Math.min(
+                    1,
+                    samples[i]
+                )
+            );
+
+
+        samples16[i] =
+            sample < 0
+            ? sample * 32768
+            : sample * 32767;
+
+    }
+
+
+    const mp3encoder =
+        new lamejs.Mp3Encoder(
+
+            1,
+
+            sampleRate,
+
+            128
+
+        );
+
+
+    const mp3Data = [];
+
+
+    const sampleBlockSize =
+        1152;
+
+
+    for (
+        let i = 0;
+        i < samples16.length;
+        i += sampleBlockSize
+    ) {
+
+        const chunk =
+            samples16.subarray(
+
+                i,
+
+                Math.min(
+
+                    i +
+                    sampleBlockSize,
+
+                    samples16.length
+
+                )
+
+            );
+
+
+        const encoded =
+            mp3encoder.encodeBuffer(
+                chunk
+            );
+
+
+        if (
+            encoded.length > 0
+        ) {
+
+            mp3Data.push(
+                new Int8Array(
+                    encoded
+                )
+            );
+
+        }
+
+    }
+
+
+    const finalBlock =
+        mp3encoder.flush();
+
+
+    if (
+        finalBlock.length > 0
+    ) {
+
+        mp3Data.push(
+            new Int8Array(
+                finalBlock
+            )
+        );
+
+    }
+
+
+    return new Blob(
+
+        mp3Data,
+
+        {
+            type:
+                "audio/mpeg"
+        }
+
+    );
+
+}
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+async function exportMP3() {
+
+    const button =
+        document.getElementById(
+            "exportMP3"
+        );
+
+
+    const status =
+        document.getElementById(
+            "exportStatus"
+        );
+
+
+    const midi =
+        parseInt(
+            document.getElementById(
+                "exportNote"
+            ).value
+        );
+
+
+    const duration =
+        parseFloat(
+            document.getElementById(
+                "exportDuration"
+            ).value
+        );
+
+
+    button.disabled = true;
+
+
+    try {
+
+        status.textContent =
+            "Rendering...";
+
+
+        const buffer =
+            await renderNote(
+
+                midi,
+
+                duration
+
+            );
+
+
+        status.textContent =
+            "Encoding MP3...";
+
+
+        const mp3 =
+            audioBufferToMP3(
+                buffer
+            );
+
+
+        const filename =
+            "synth_" +
+            midiToName(midi) +
+            "_" +
+            Math.round(
+                midiToFrequency(midi)
+            ) +
+            "Hz.mp3";
+
+
+        const url =
+            URL.createObjectURL(
+                mp3
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+
+        link.href =
+            url;
+
+
+        link.download =
+            filename;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        setTimeout(
+            () =>
+                URL.revokeObjectURL(
+                    url
+                ),
+            1000
+        );
+
+
+        status.textContent =
+            "Saved: " +
+            filename;
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "Export failed";
+
+    }
+    finally {
+
+        button.disabled =
+            false;
+
+    }
+
+}
+
+
+document.getElementById(
+    "exportMP3"
+).addEventListener(
+    "click",
+    exportMP3
+);
+
+
+/* =========================================================
+   INITIALISE UI
+========================================================= */
+
+function initialiseUI() {
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        updateDetuneDisplay(i);
+
+
+        document.getElementById(
+            `osc${i + 1}LevelValue`
+        ).textContent =
+            Math.round(
+                oscillators[i].level *
+                100
+            ) + "%";
+
+    }
+
+
+    document.getElementById(
+        "cutoffValue"
+    ).textContent =
+        filterCutoff +
+        " Hz";
+
+
+    document.getElementById(
+        "resonanceValue"
+    ).textContent =
+        "Q " +
+        filterResonance.toFixed(1);
+
+
+    document.getElementById(
+        "filterEnvelopeAmountValue"
+    ).textContent =
+        "+" +
+        filterEnvelopeAmount +
+        " Hz";
+
+
+    document.getElementById(
+        "waveStatus"
+    );
+
+
+    updateOctave();
+
+    updateOscillatorCount();
+
+    resizeEnvelopeCanvas();
+
+}
+
+
+initialiseUI();
+
+
+</script>
+
+</body>
+</html>
