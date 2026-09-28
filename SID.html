@@ -153,6 +153,11 @@ input[type="range"] {
     color: #ccc;
 }
 
+#patchDescription {
+    max-width: 430px;
+    color: #888;
+}
+
 button {
 
     background: #292929;
@@ -638,6 +643,51 @@ button:disabled {
 
 
 <h1>WEB SYNTHESISER</h1>
+
+
+<!-- =================================================
+     BLADE RUNNER PATCHES
+================================================= -->
+
+<div class="section">
+
+<div class="section-title">
+    Blade Runner Patches
+</div>
+
+<div class="controls">
+
+<div class="control">
+
+<label for="bladeRunnerPatch">
+Patch
+</label>
+
+<select id="bladeRunnerPatch">
+
+<option value="manual">Manual / Current Settings</option>
+<option value="brBrass">BR Brass</option>
+<option value="rachel">Rachel</option>
+<option value="ghostChoir">Ghost Choir</option>
+<option value="cityDrone">City Drone</option>
+<option value="spinner">Spinner</option>
+<option value="tears">Tears</option>
+<option value="cs80Scream">CS-80 Scream</option>
+
+</select>
+
+</div>
+
+<div class="control" style="justify-content:flex-end;">
+
+<label>&nbsp;</label>
+
+<span class="value" id="patchDescription">Manual synthesiser settings</span>
+
+</div>
+
+</div>
+</div>
 
 
 <!-- =================================================
@@ -1502,6 +1552,186 @@ let filterResonance = 1;
 let filterEnvelopeEnabled = true;
 
 let filterEnvelopeAmount = 4000;
+
+
+/* =========================================================
+   BLADE RUNNER PATCHES
+========================================================= */
+
+const bladeRunnerPatches = {
+
+    brBrass: {
+        description: "CS-80-style orchestral brass swell",
+        oscillators: [
+            { enabled: true,  waveform: "sawtooth", detune: -4, level: 0.90 },
+            { enabled: true,  waveform: "sawtooth", detune:  4, level: 0.78 },
+            { enabled: true,  waveform: "triangle", detune:  0, level: 0.35 }
+        ],
+        envelope: { attack: 0.65, decay: 1.80, sustain: 0.78, release: 4.50 },
+        filter: { type: "lowpass", cutoff: 2100, resonance: 1.2, envelopeEnabled: true, envelopeAmount: 5200 },
+        masterVolume: 0.32
+    },
+
+    rachel: {
+        description: "Warm CS-80 / string-ensemble romantic pad",
+        oscillators: [
+            { enabled: true,  waveform: "sawtooth", detune: -7, level: 0.70 },
+            { enabled: true,  waveform: "sawtooth", detune:  7, level: 0.58 },
+            { enabled: true,  waveform: "triangle", detune:  0, level: 0.42 }
+        ],
+        envelope: { attack: 1.40, decay: 2.20, sustain: 0.82, release: 7.00 },
+        filter: { type: "lowpass", cutoff: 2800, resonance: 0.8, envelopeEnabled: true, envelopeAmount: 2800 },
+        masterVolume: 0.30
+    },
+
+    ghostChoir: {
+        description: "VP-330-inspired human voice / string texture",
+        oscillators: [
+            { enabled: true,  waveform: "triangle", detune: -9, level: 0.78 },
+            { enabled: true,  waveform: "sawtooth", detune:  9, level: 0.48 },
+            { enabled: true,  waveform: "sine", detune:  0, level: 0.32 }
+        ],
+        envelope: { attack: 1.10, decay: 2.60, sustain: 0.74, release: 6.50 },
+        filter: { type: "bandpass", cutoff: 1500, resonance: 1.8, envelopeEnabled: true, envelopeAmount: 1300 },
+        masterVolume: 0.28
+    },
+
+    cityDrone: {
+        description: "Deep analogue city / skyline drone",
+        oscillators: [
+            { enabled: true,  waveform: "sawtooth", detune: -3, level: 0.80 },
+            { enabled: true,  waveform: "sawtooth", detune:  3, level: 0.72 },
+            { enabled: true,  waveform: "sine", detune: -1200, level: 0.58 }
+        ],
+        envelope: { attack: 2.20, decay: 3.00, sustain: 0.92, release: 8.00 },
+        filter: { type: "lowpass", cutoff: 620, resonance: 0.7, envelopeEnabled: true, envelopeAmount: 900 },
+        masterVolume: 0.30
+    },
+
+    spinner: {
+        description: "Mechanical Spinner engine / airborne machine texture",
+        oscillators: [
+            { enabled: true,  waveform: "sawtooth", detune: -18, level: 0.82 },
+            { enabled: true,  waveform: "triangle", detune:  19, level: 0.52 },
+            { enabled: true,  waveform: "sawtooth", detune:  1200, level: 0.22 }
+        ],
+        envelope: { attack: 0.08, decay: 0.45, sustain: 0.58, release: 1.80 },
+        filter: { type: "bandpass", cutoff: 950, resonance: 3.2, envelopeEnabled: true, envelopeAmount: 2400 },
+        masterVolume: 0.25
+    },
+
+    tears: {
+        description: "Fragile upper-register Tears in Rain texture",
+        oscillators: [
+            { enabled: true,  waveform: "sine", detune:  0, level: 0.90 },
+            { enabled: true,  waveform: "triangle", detune: 1200, level: 0.18 },
+            { enabled: false, waveform: "sine", detune: 0, level: 0.00 }
+        ],
+        envelope: { attack: 0.02, decay: 1.50, sustain: 0.24, release: 3.20 },
+        filter: { type: "lowpass", cutoff: 4300, resonance: 0.5, envelopeEnabled: true, envelopeAmount: 1200 },
+        masterVolume: 0.26
+    },
+
+    cs80Scream: {
+        description: "Expressive CS-80 lead / filter scream",
+        oscillators: [
+            { enabled: true,  waveform: "sawtooth", detune: -6, level: 0.88 },
+            { enabled: true,  waveform: "sawtooth", detune:  6, level: 0.82 },
+            { enabled: true,  waveform: "triangle", detune: 12, level: 0.24 }
+        ],
+        envelope: { attack: 0.12, decay: 0.55, sustain: 0.72, release: 2.80 },
+        filter: { type: "lowpass", cutoff: 1450, resonance: 7.0, envelopeEnabled: true, envelopeAmount: 7200 },
+        masterVolume: 0.27
+    }
+};
+
+
+function releaseActiveVoicesForPatch() {
+
+    for (const midi of Array.from(activeVoices.keys())) {
+        noteOff(midi);
+    }
+}
+
+
+function updatePatchUI() {
+
+    document.getElementById("patchDescription").textContent =
+        document.getElementById("bladeRunnerPatch").value === "manual"
+        ? "Manual synthesiser settings"
+        : bladeRunnerPatches[document.getElementById("bladeRunnerPatch").value].description;
+}
+
+
+function applyBladeRunnerPatch(name) {
+
+    if (name === "manual") {
+        updatePatchUI();
+        return;
+    }
+
+    const patch = bladeRunnerPatches[name];
+
+    if (!patch) {
+        return;
+    }
+
+    releaseActiveVoicesForPatch();
+
+    for (let i = 0; i < 3; i++) {
+        Object.assign(oscillators[i], patch.oscillators[i]);
+    }
+
+    Object.assign(envelope, patch.envelope);
+
+    filterType = patch.filter.type;
+    filterCutoff = patch.filter.cutoff;
+    filterResonance = patch.filter.resonance;
+    filterEnvelopeEnabled = patch.filter.envelopeEnabled;
+    filterEnvelopeAmount = patch.filter.envelopeAmount;
+    masterVolume = patch.masterVolume;
+
+    /* Update the existing controls without changing their behavior. */
+    for (let i = 0; i < 3; i++) {
+        const n = i + 1;
+        document.getElementById(`osc${n}Enabled`).checked = oscillators[i].enabled;
+        document.getElementById(`osc${n}Waveform`).value = oscillators[i].waveform;
+        document.getElementById(`osc${n}Detune`).value = oscillators[i].detune;
+        document.getElementById(`osc${n}Level`).value = oscillators[i].level;
+        updateDetuneDisplay(i);
+        document.getElementById(`osc${n}LevelValue`).textContent =
+            Math.round(oscillators[i].level * 100) + "%";
+    }
+
+    document.getElementById("filterType").value = filterType;
+    document.getElementById("filterCutoff").value = filterCutoff;
+    document.getElementById("filterCutoff").dispatchEvent(new Event("input", { bubbles: true }));
+    document.getElementById("filterResonance").value = filterResonance;
+    document.getElementById("filterResonance").dispatchEvent(new Event("input", { bubbles: true }));
+    document.getElementById("filterEnvelope").checked = filterEnvelopeEnabled;
+    document.getElementById("filterEnvelopeAmount").value = filterEnvelopeAmount;
+    document.getElementById("filterEnvelopeAmount").dispatchEvent(new Event("input", { bubbles: true }));
+    document.getElementById("masterVolume").value = masterVolume;
+    document.getElementById("masterVolume").dispatchEvent(new Event("input", { bubbles: true }));
+
+    envelopePoints[0].x = Math.max(0.02, Math.min(1, envelope.attack / 4));
+    envelopePoints[1].x = Math.max(envelopePoints[0].x + 0.02, Math.min(1, (envelope.attack + envelope.decay) / 6));
+    envelopePoints[1].y = envelope.sustain;
+    envelopePoints[2].x = Math.max(envelopePoints[1].x + 0.02, Math.min(0.98, envelopePoints[1].x + 0.30));
+    envelopePoints[2].y = envelope.sustain;
+    envelopePoints[3].x = 1;
+    envelopePoints[3].y = 0;
+
+    updateEnvelopeValues();
+    drawEnvelope();
+    updateOscillatorCount();
+    updatePatchUI();
+}
+
+
+document.getElementById("bladeRunnerPatch").addEventListener("change", function() {
+    applyBladeRunnerPatch(this.value);
+});
 
 
 /* =========================================================
@@ -4462,6 +4692,8 @@ function initialiseUI() {
     updateOscillatorCount();
 
     resizeEnvelopeCanvas();
+
+    updatePatchUI();
 
 }
 
